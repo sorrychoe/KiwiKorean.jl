@@ -1,0 +1,47 @@
+# Kiwi v0.24.1 (Apache-2.0) 업스트림 릴리스 바이너리
+# https://github.com/bab2min/Kiwi/releases/tag/v0.24.1
+
+[kiwi_model]
+git-tree-sha1 = "89e4c7f387e1bc88c62397fefa2ad72b5294628d"
+
+    [[kiwi_model.download]]
+    url = "https://github.com/bab2min/Kiwi/releases/download/v0.24.1/kiwi_model_v0.24.1_base.tgz"
+    sha256 = "50d163e1af817444ef21f7ec5ea07ef69fb347282d57a6b49260f2039d4dc346"
+
+[[kiwi_lib]]
+arch = "x86_64"
+os = "linux"
+libc = "glibc"
+git-tree-sha1 = "4728b1e3e2bb9fcf904bfdb8464466bba2f047ba"
+
+    [[kiwi_lib.download]]
+    url = "https://github.com/bab2min/Kiwi/releases/download/v0.24.1/kiwi_lnx_x86_64_v0.24.1.tgz"
+    sha256 = "534f3b507784ea0f2c26884a13c22f2bfa573f86b6c20b9856feb9050a88f47a"
+
+[[kiwi_lib]]
+arch = "aarch64"
+os = "linux"
+libc = "glibc"
+git-tree-sha1 = "495270a112e7956d344c46927d44b44f3af87187"
+
+    [[kiwi_lib.download]]
+    url = "https://github.com/bab2min/Kiwi/releases/download/v0.24.1/kiwi_lnx_aarch64_v0.24.1.tgz"
+    sha256 = "ff15838604039130d24e2803ed87c2edc36665f9ff24be8a23b257c2860bc25b"
+
+[[kiwi_lib]]
+arch = "aarch64"
+os = "macos"
+git-tree-sha1 = "7c4e2a2e9b97d12efaa08a92c283c6d904717a1e"
+
+    [[kiwi_lib.download]]
+    url = "https://github.com/bab2min/Kiwi/releases/download/v0.24.1/kiwi_mac_arm64_v0.24.1.tgz"
+    sha256 = "510680643980c4af94bee57151020b6373a098bac809084e7cb26080fc5bd9b9"
+
+[[kiwi_lib]]
+arch = "x86_64"
+os = "macos"
+git-tree-sha1 = "6cca08bf9a0df8534e92ea720332e9c392fa03b0"
+
+    [[kiwi_lib.download]]
+    url = "https://github.com/bab2min/Kiwi/releases/download/v0.24.1/kiwi_mac_x86_64_v0.24.1.tgz"
+    sha256 = "9042ea4ca99bbb57c8bd3574b2cb1542958734e1f1de8ff8fe6a6ad05e5f077a"

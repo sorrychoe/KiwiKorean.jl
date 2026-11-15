@@ -1,0 +1,18 @@
+name = "KiwiKorean"
+uuid = "539c96f0-2c63-4cb8-98ff-ed862f2fd931"
+version = "0.1.0"
+
+[deps]
+Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
+
+[compat]
+Artifacts = "1"
+TextAnalysis = "0.8"
+julia = "1.9"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TextAnalysis = "a2db99b7-8b79-58f8-94bf-bbc811eef33d"
+
+[targets]
+test = ["Test", "TextAnalysis"]
