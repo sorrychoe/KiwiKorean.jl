@@ -8,7 +8,7 @@
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/sorrychoe/KiwiKorean.jl")  # 설치 시 Kiwi 바이너리와 모델(약 160MB)을 받는다
+Pkg.add("KiwiKorean")  # 설치 시 Kiwi 바이너리와 모델(약 160MB)을 받는다
 ```
 
 지원 플랫폼: Linux (x86_64, aarch64, glibc), macOS (x86_64, arm64).
