@@ -8,7 +8,7 @@ Korean morphological analysis for Julia, calling the [Kiwi](https://github.com/b
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/sorrychoe/KiwiKorean.jl")  # downloads the Kiwi binary and model (~160 MB)
+Pkg.add("KiwiKorean")  # downloads the Kiwi binary and model (~160 MB)
 ```
 
 Supported platforms: Linux (x86_64, aarch64, glibc) and macOS (x86_64, arm64).
