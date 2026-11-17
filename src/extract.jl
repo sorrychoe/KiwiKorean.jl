@@ -1,3 +1,4 @@
+# kiwi_reader_t: if buf is NULL return the byte length of document idx, else copy it into buf. Returning 0 ends input.
 # kiwi_reader_t: buf가 NULL이면 idx번째 문서의 바이트 길이를, 아니면 buf에 복사. 0을 돌려주면 끝.
 function read_text(idx::Cint, buf::Ptr{UInt8}, ud::Ptr{Cvoid})::Cint
     texts = unsafe_pointer_to_objref(ud)::Vector{String}
@@ -8,7 +9,13 @@ function read_text(idx::Cint, buf::Ptr{UInt8}, ud::Ptr{Cvoid})::Cint
 end
 
 """
-    extract_words(texts; min_cnt=10, max_word_len=10, min_score=0.25, pos_threshold=-3.0, model=기본 모델)
+    extract_words(texts; min_cnt=10, max_word_len=10, min_score=0.25, pos_threshold=-3.0,
+                  model=default_model())
+
+Unsupervised extraction of out-of-vocabulary word candidates (e.g. neologisms) from the
+corpus `texts`. Returns `(form, score, freq, pos_score)` NamedTuples sorted by score;
+`pos_score` indicates how likely the word is a noun. Results can be passed to
+`Kiwi(user_words=...)`.
 
 말뭉치 `texts`에서 사전에 없는 단어(신조어) 후보를 비지도 방식으로 추출한다.
 `(form, score, freq, pos_score)` NamedTuple 목록을 점수 순으로 돌려준다.
@@ -16,9 +23,9 @@ end
 """
 function extract_words(texts; min_cnt::Integer=10, max_word_len::Integer=10, min_score::Real=0.25,
                        pos_threshold::Real=-3.0, model=default_model())
-    docs = String[String(t) for t in texts if !isempty(t)]  # 길이 0은 Kiwi에서 입력 끝을 뜻한다
+    docs = String[String(t) for t in texts if !isempty(t)]  # length 0 means end of input to Kiwi / 길이 0은 Kiwi에서 입력 끝을 뜻한다
     reader = @cfunction(read_text, Cint, (Cint, Ptr{UInt8}, Ptr{Cvoid}))
-    b = builder(model, 1)  # ponytail: 콜백을 호출 스레드에서만 부르므로 1스레드
+    b = builder(model, 1)  # ponytail: 1 thread so the callback runs only on the calling thread / 콜백을 호출 스레드에서만 부르므로 1스레드
     try
         ws = GC.@preserve docs check(ccall((:kiwi_builder_extract_words, libkiwi), Ptr{Cvoid},
                                            (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Cint, Cint, Cfloat, Cfloat),

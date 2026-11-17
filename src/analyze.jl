@@ -1,6 +1,10 @@
 """
     Token(form, tag, span)
 
+A single morpheme. `form` is the morpheme, `tag` its Sejong POS tag, and `span` the
+byte index range in the original text, so `text[t.span]` returns the surface form.
+In contractions (e.g. "했" → 하/VV + 었/EP) several morphemes can share one `span`.
+
 형태소 하나. `form`은 형태, `tag`는 세종 품사 태그, `span`은 원문에서의 바이트 인덱스 범위로
 `text[t.span]`이 해당 표층형을 돌려준다. 축약(예: "했" → 하/VV + 었/EP)에서는
 여러 형태소가 같은 `span`을 공유할 수 있다.
@@ -17,19 +21,25 @@ const PREDICATE_TAGS = ("VV", "VA", "VX", "VCP", "VCN")
 """
     lemma(t::Token) -> String
 
+Dictionary form of a token. For predicates (verbs VV, adjectives VA, auxiliary
+predicates VX, copulas VCP/VCN) this is the stem plus "다" (e.g. 좋/VA → "좋다");
+other tokens return `form` unchanged. Kiwi already restores irregular stems
+("걸어" → 걷/VV-I), so appending "다" is enough.
+
 용언(동사 VV, 형용사 VA, 보조용언 VX, 지정사 VCP·VCN)이면 어간에 "다"를 붙인 기본형을,
 아니면 형태를 그대로 돌려준다. Kiwi가 불규칙 활용 어간을 이미 복원하므로("걸어" → 걷/VV-I)
 "다"만 붙이면 된다.
 """
 lemma(t::Token) = any(p -> startswith(t.tag, p), PREDICATE_TAGS) ? t.form * "다" : t.form
 
+# Byte index for 0-based UTF-16 offset u is m[u+1]; the end maps to ncodeunits(s)+1.
 # UTF-16 오프셋 u(0부터)에 대응하는 바이트 인덱스: m[u+1]. 끝은 ncodeunits(s)+1.
 function utf16_byte_map(s::String)
     m = Int[]
     for i in eachindex(s)
         push!(m, i)
         c = s[i]
-        isvalid(c) && codepoint(c) > 0xffff && push!(m, i)  # 서로게이트 쌍은 UTF-16 두 칸
+        isvalid(c) && codepoint(c) > 0xffff && push!(m, i)  # surrogate pair = two UTF-16 units / 서로게이트 쌍은 UTF-16 두 칸
     end
     push!(m, ncodeunits(s) + 1)
 end
@@ -42,6 +52,9 @@ end
 """
     tokenize([kiwi], text) -> Vector{Token}
 
+Analyze `text` and return the morphemes of the best analysis. Without `kiwi`, a
+default analyzer is created on first use and reused.
+
 `text`를 형태소 분석해 최상위 결과를 반환한다. `kiwi`를 생략하면 기본 분석기를 쓴다.
 """
 function tokenize(k::Kiwi, text::AbstractString)
@@ -52,6 +65,7 @@ function tokenize(k::Kiwi, text::AbstractString)
         n = check(ccall((:kiwi_res_word_num, libkiwi), Cint, (Ptr{Cvoid}, Cint), r, 0))
         m = utf16_byte_map(s)
         map(0:n-1) do i
+            # Morpheme positions are in UTF-16 units even in the UTF-8 API.
             # 형태소 위치는 UTF-8 API에서도 UTF-16 단위다
             p = ccall((:kiwi_res_position, libkiwi), Cint, (Ptr{Cvoid}, Cint, Cint), r, 0, i)
             l = ccall((:kiwi_res_length, libkiwi), Cint, (Ptr{Cvoid}, Cint, Cint), r, 0, i)
@@ -64,11 +78,16 @@ function tokenize(k::Kiwi, text::AbstractString)
     end
 end
 
+# tags: tag prefixes to keep. ("NN",) keeps NNG/NNP/NNB, ("VV",) keeps VV/VV-I/VV-R.
 # tags: 남길 품사 태그의 접두어 목록. ("NN",)은 NNG·NNP·NNB를, ("VV",)는 VV·VV-I·VV-R를 남긴다.
 keep(t::Token, tags) = tags === nothing || any(p -> startswith(t.tag, p), tags)
 
 """
     morphs([kiwi], text; tags=nothing, lemma=false) -> Vector{String}
+
+Morphemes of `text` as strings. `tags` is a collection of tag prefixes to keep,
+e.g. `("NN",)` keeps NNG, NNP and NNB. With `lemma=true`, predicates are returned in
+dictionary form ("좋" → "좋다"); see [`lemma`](@ref).
 
 형태소 문자열 목록. `tags`(태그 접두어 목록)를 주면 해당 품사만 남긴다.
 `lemma=true`면 용언을 기본형("좋" → "좋다")으로 돌려준다.
@@ -79,6 +98,8 @@ morphs(k::Kiwi, text::AbstractString; tags=nothing, lemma::Bool=false) =
 """
     pos([kiwi], text; tags=nothing, lemma=false) -> Vector{Tuple{String,String}}
 
+Like [`morphs`](@ref), but returns `(form, tag)` tuples.
+
 `(형태, 품사)` 튜플 목록.
 """
 pos(k::Kiwi, text::AbstractString; tags=nothing, lemma::Bool=false) =
@@ -87,12 +108,16 @@ pos(k::Kiwi, text::AbstractString; tags=nothing, lemma::Bool=false) =
 """
     nouns([kiwi], text) -> Vector{String}
 
+Common (NNG) and proper (NNP) nouns in `text`.
+
 일반명사(NNG)와 고유명사(NNP).
 """
 nouns(k::Kiwi, text::AbstractString) = morphs(k, text; tags=("NNG", "NNP"))
 
 """
     split_sentences([kiwi], text) -> Vector{String}
+
+Split `text` into sentences.
 
 문장 단위로 분리한다.
 """
@@ -103,6 +128,7 @@ function split_sentences(k::Kiwi, text::AbstractString)
     try
         n = check(ccall((:kiwi_ss_size, libkiwi), Cint, (Ptr{Cvoid},), ss))
         map(0:n-1) do i
+            # Sentence positions are byte offsets in the UTF-8 API (unlike morpheme positions).
             # 문장 위치는 UTF-8 API에서 바이트 오프셋 (형태소 위치와 단위가 다름)
             b = ccall((:kiwi_ss_begin_position, libkiwi), Cint, (Ptr{Cvoid}, Cint), ss, i)
             e = ccall((:kiwi_ss_end_position, libkiwi), Cint, (Ptr{Cvoid}, Cint), ss, i)
@@ -115,6 +141,9 @@ end
 
 """
     space([kiwi], text; reset=false) -> String
+
+Correct word spacing in `text`. With `reset=true`, existing spaces may also be
+removed where Kiwi considers them wrong.
 
 띄어쓰기를 교정한다. `reset=true`면 이미 띄어 쓴 부분을 붙이는 교정도 한다.
 """

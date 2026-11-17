@@ -1,6 +1,17 @@
 """
     Kiwi(; user_words=(), user_dict=nothing, typos=:none, typo_cost_threshold=2.5,
-           model=기본 모델, num_threads=-1)
+           model=default_model(), num_threads=-1)
+
+Create a Kiwi morphological analyzer.
+
+- `user_words`: user words, as `word => tag` pairs, e.g. `"챗GPT" => "NNP"`.
+- `user_dict`: path to a Kiwi user dictionary file (one `word<TAB>tag<TAB>score` per line).
+- `typos`: typo correction set. `:none` (default), `:basic`, `:continual` (liaison),
+  `:basic_continual`, `:lengthening` (vowel lengthening), `:basic_continual_lengthening`,
+  `:dialect`. Enabling correction slows down both construction and analysis.
+- `typo_cost_threshold`: only typos whose cost is at most this value are considered.
+- `model`: path to the Kiwi model directory; defaults to the bundled base model.
+- `num_threads`: number of worker threads; `-1` lets Kiwi choose.
 
 Kiwi 형태소 분석기를 만든다.
 
@@ -13,12 +24,12 @@ Kiwi 형태소 분석기를 만든다.
 """
 mutable struct Kiwi
     ptr::Ptr{Cvoid}
-    typo::Ptr{Cvoid}         # kiwi_prepared_typo_h, 오타 교정을 안 쓰면 C_NULL
+    typo::Ptr{Cvoid}         # kiwi_prepared_typo_h; C_NULL without typo correction / 오타 교정을 안 쓰면 C_NULL
     option::AnalyzeOption
     function Kiwi(; user_words=(), user_dict=nothing, typos::Symbol=:none, typo_cost_threshold::Real=2.5,
                   model=default_model(), num_threads=-1)
         typos === :none || haskey(TYPO_SETS, typos) ||
-            throw(ArgumentError("알 수 없는 typos: $typos. 가능한 값: :none, $(join(keys(TYPO_SETS), ", "))"))
+            throw(ArgumentError("unknown typos: $typos. Valid values: :none, $(join(keys(TYPO_SETS), ", "))"))
         b = builder(model, num_threads)
         try
             for (word, tag) in user_words
@@ -27,6 +38,8 @@ mutable struct Kiwi
             end
             user_dict === nothing ||
                 check(ccall((:kiwi_builder_load_dict, libkiwi), Cint, (Ptr{Cvoid}, Cstring), b, user_dict))
+            # In v0.24, passing a typo set at build time crashes during analysis,
+            # so a prepared typo corrector is passed via the analyze options instead.
             # v0.24에서는 빌드 시 오타 집합을 넘기면 분석 중 크래시가 난다.
             # 대신 준비된(prepared) 오타 교정기를 분석 옵션으로 넘긴다.
             ptr = check(ccall((:kiwi_builder_build, libkiwi), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Cfloat),
@@ -34,6 +47,7 @@ mutable struct Kiwi
             typo = if typos === :none
                 C_NULL
             else
+                # Handles from kiwi_typo_get_default are built-in objects; do not free them.
                 # kiwi_typo_get_default의 핸들은 내장 객체라 해제하지 않는다
                 t = check(ccall((:kiwi_typo_get_default, libkiwi), Ptr{Cvoid}, (Cint,), TYPO_SETS[typos]))
                 check(ccall((:kiwi_typo_prepare, libkiwi), Ptr{Cvoid}, (Ptr{Cvoid},), t))

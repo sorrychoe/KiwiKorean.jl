@@ -1,5 +1,6 @@
 const ARTIFACTS_TOML = joinpath(@__DIR__, "..", "Artifacts.toml")
 
+# Set in __init__. Can be overridden with ENV["KIWI_LIB"] (for platforms without an artifact, e.g. Windows).
 # __init__에서 설정. ENV["KIWI_LIB"]로 덮어쓸 수 있다 (Windows 등 아티팩트가 없는 플랫폼용).
 libkiwi::String = ""
 
@@ -30,6 +31,7 @@ end
 check(p::Ptr) = p == C_NULL ? kiwi_error() : p
 check(r::Integer) = r < 0 ? kiwi_error() : r
 
+# Same memory layout as kiwi_analyze_option_t in capi.h.
 # capi.h의 kiwi_analyze_option_t와 같은 메모리 배치
 struct AnalyzeOption
     match_options::Cint
@@ -45,6 +47,7 @@ const BUILD_DEFAULT = Cint(15)
 # KIWI_MATCH_ALL_WITH_NORMALIZING: URL|EMAIL|HASHTAG|MENTION|SERIAL|EMOJI|Z_CODA|NORMALIZE_CODA
 const MATCH_DEFAULT = Cint(0x3f | 1 << 23 | 1 << 16)
 
+# KIWI_TYPO_* enum values.
 # KIWI_TYPO_* 열거형
 const TYPO_SETS = Dict(:basic => 1, :continual => 2, :basic_continual => 3, :lengthening => 4,
                        :basic_continual_lengthening => 5, :dialect => 6)
