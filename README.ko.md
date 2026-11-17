@@ -79,7 +79,14 @@ k = Kiwi(user_words=[w.form => "NNP" for w in cands if w.pos_score > 0])
 
 ### 불용어
 
-결과를 거르면 된다: `filter(∉(stopwords), nouns(text))`.
+패키지에는 불용어 목록이 없다. 분석할 말뭉치에 맞게 직접 정의해 토큰을 거른다.
+
+```julia
+stopwords = Set(["것", "수", "등", "때"])  # 직접 정한 목록
+filter(∉(stopwords), nouns(text))
+```
+
+`Languages.jl`에도 한국어 목록(`stopwords(Languages.Korean())`)이 있지만 문장부호와 여러 단어로 된 항목이 섞여 있으니 검토한 뒤 쓴다.
 
 ## TextAnalysis.jl과 함께 쓰기
 

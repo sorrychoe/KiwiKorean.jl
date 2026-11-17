@@ -79,7 +79,14 @@ k = Kiwi(user_words=[w.form => "NNP" for w in cands if w.pos_score > 0])
 
 ### Stopwords
 
-Filter the results: `filter(∉(stopwords), nouns(text))`.
+The package does not ship a stopword list; define one for your corpus and filter the tokens:
+
+```julia
+stopwords = Set(["것", "수", "등", "때"])  # your own list
+filter(∉(stopwords), nouns(text))
+```
+
+`Languages.jl` also has a Korean list (`stopwords(Languages.Korean())`), but it mixes in punctuation and multi-word entries, so review it before use.
 
 ## With TextAnalysis.jl
 
