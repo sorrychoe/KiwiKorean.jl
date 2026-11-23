@@ -18,17 +18,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ['1.9', '1']        # 최소 지원 버전과 최신 안정판
+        version: ['1.10', '1']       # 최소 지원 버전과 최신 안정판
         os:
           - ubuntu-latest            # Linux x86_64
           - ubuntu-24.04-arm         # Linux aarch64
           - macos-latest             # macOS arm64
-        # Windows는 Kiwi 아티팩트가 없어 제외한다 (docs/release-guide.md 참고)
+          - windows-latest           # Windows x86_64
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
-      - uses: julia-actions/cache@v2   # Kiwi 아티팩트(약 160MB)도 캐시된다
+      - uses: julia-actions/cache@v2   # Kiwi_jll과 모델 아티팩트(약 90MB)도 캐시된다
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1

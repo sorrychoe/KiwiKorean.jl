@@ -1,30 +1,15 @@
-const ARTIFACTS_TOML = joinpath(@__DIR__, "..", "Artifacts.toml")
-
-# Set in __init__. Can be overridden with ENV["KIWI_LIB"] (for platforms without an artifact, e.g. Windows).
-# __init__에서 설정. ENV["KIWI_LIB"]로 덮어쓸 수 있다 (Windows 등 아티팩트가 없는 플랫폼용).
+# Path of libkiwi, copied from Kiwi_jll at load time (Kiwi_jll fills it in its own __init__).
+# Kiwi_jll defines it only on the platforms it is built for; elsewhere `builder` reports that.
+# libkiwi 경로. Kiwi_jll이 자체 __init__에서 채운 값을 로드 시점에 가져온다.
+# Kiwi_jll은 빌드된 플랫폼에서만 이를 정의하며, 그 밖의 플랫폼에서는 `builder`가 알려 준다.
 libkiwi::String = ""
+__init__() = isdefined(Kiwi_jll, :libkiwi) && (global libkiwi = Kiwi_jll.libkiwi)
 
-function artifact_dir(name)
-    h = artifact_hash(name, ARTIFACTS_TOML)
-    h === nothing && error("이 플랫폼용 Kiwi 아티팩트($name)가 없습니다. " *
-                           "Kiwi 릴리스를 직접 받아 ENV[\"KIWI_LIB\"]에 libkiwi 경로를 지정하세요.")
-    path = artifact_path(h)
-    isdir(path) || error("Kiwi 아티팩트($name)가 설치되지 않았습니다. `using Pkg; Pkg.instantiate()`를 실행하세요.")
-    path
-end
-
-function __init__()
-    global libkiwi = get(ENV, "KIWI_LIB", "")
-    if isempty(libkiwi) && artifact_hash("kiwi_lib", ARTIFACTS_TOML) !== nothing
-        libkiwi = joinpath(artifact_dir("kiwi_lib"), "lib", Sys.isapple() ? "libkiwi.dylib" : "libkiwi.so")
-    end
-end
-
-default_model() = joinpath(artifact_dir("kiwi_model"), "models", "cong", "base")
+default_model() = joinpath(artifact"kiwi_model", "models", "cong", "base")
 
 function kiwi_error()
     p = ccall((:kiwi_error, libkiwi), Ptr{UInt8}, ())
-    msg = p == C_NULL ? "알 수 없는 오류" : unsafe_string(p)
+    msg = p == C_NULL ? "unknown error / 알 수 없는 오류" : unsafe_string(p)
     ccall((:kiwi_clear_error, libkiwi), Cvoid, ())
     error("Kiwi: ", msg)
 end
@@ -52,7 +37,11 @@ const MATCH_DEFAULT = Cint(0x3f | 1 << 23 | 1 << 16)
 const TYPO_SETS = Dict(:basic => 1, :continual => 2, :basic_continual => 3, :lengthening => 4,
                        :basic_continual_lengthening => 5, :dialect => 6)
 
-builder(model, num_threads) =
+function builder(model, num_threads)
+    Kiwi_jll.is_available() ||
+        error("Kiwi_jll is not available on this platform ($(Sys.MACHINE)). / " *
+              "이 플랫폼($(Sys.MACHINE))에서는 Kiwi_jll을 쓸 수 없습니다.")
     check(ccall((:kiwi_builder_init, libkiwi), Ptr{Cvoid}, (Cstring, Cint, Cint, Cint),
                 model, num_threads, BUILD_DEFAULT, 0))
+end
 close_builder(b) = ccall((:kiwi_builder_close, libkiwi), Cint, (Ptr{Cvoid},), b)

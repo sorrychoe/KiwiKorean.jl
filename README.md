@@ -8,11 +8,17 @@ Korean morphological analysis for Julia, calling the [Kiwi](https://github.com/b
 
 ```julia
 using Pkg
-Pkg.add("KiwiKorean")  # downloads the Kiwi binary and model (~160 MB)
+Pkg.add("KiwiKorean")  # also downloads the Kiwi model (~90 MB)
 ```
 
-Supported platforms: Linux (x86_64, aarch64, glibc) and macOS (x86_64, arm64).
-On other platforms (e.g. Windows), download a [Kiwi release](https://github.com/bab2min/Kiwi/releases) yourself, set `ENV["KIWI_LIB"]` to the libkiwi path before `using KiwiKorean`, and pass the model path as `Kiwi(model=...)`.
+The Kiwi library comes from [Kiwi_jll](https://github.com/JuliaBinaryWrappers/Kiwi_jll.jl), built by [Yggdrasil](https://github.com/JuliaPackaging/Yggdrasil/tree/master/K/Kiwi) for Linux (glibc and musl), macOS, Windows and FreeBSD. Requires Julia 1.10 or later.
+
+To use your own build of Kiwi instead, point Kiwi_jll at it and restart Julia:
+
+```julia
+using Preferences, Kiwi_jll
+set_preferences!(Kiwi_jll, "libkiwi_path" => "/path/to/libkiwi.so")
+```
 
 ## Usage
 
@@ -102,4 +108,4 @@ Avoid TextAnalysis's `prepare!(doc, strip_stopwords)` and `stem!` on Korean text
 
 ## License
 
-MIT (see [LICENSE](LICENSE)). The Kiwi binaries and model downloaded at install time (Kiwi v0.24.1) are Apache-2.0.
+MIT (see [LICENSE](LICENSE)). Kiwi (v0.25.0), its library from Kiwi_jll and the model downloaded at install time, is Apache-2.0.

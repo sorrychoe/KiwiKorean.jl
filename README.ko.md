@@ -8,11 +8,17 @@
 
 ```julia
 using Pkg
-Pkg.add("KiwiKorean")  # 설치 시 Kiwi 바이너리와 모델(약 160MB)을 받는다
+Pkg.add("KiwiKorean")  # 설치 시 Kiwi 모델(약 90MB)도 받는다
 ```
 
-지원 플랫폼: Linux (x86_64, aarch64, glibc), macOS (x86_64, arm64).
-그 밖의 플랫폼(Windows 등)에서는 [Kiwi 릴리스](https://github.com/bab2min/Kiwi/releases)를 직접 받아 `using KiwiKorean` 전에 `ENV["KIWI_LIB"]`에 libkiwi 경로를 지정하고, `Kiwi(model=...)`에 모델 경로를 넘긴다.
+Kiwi 라이브러리는 [Yggdrasil](https://github.com/JuliaPackaging/Yggdrasil/tree/master/K/Kiwi)이 빌드한 [Kiwi_jll](https://github.com/JuliaBinaryWrappers/Kiwi_jll.jl)에서 받는다. Linux(glibc, musl), macOS, Windows, FreeBSD를 지원하며 Julia 1.10 이상이 필요하다.
+
+직접 빌드한 Kiwi를 쓰려면 Kiwi_jll에 경로를 지정하고 Julia를 다시 시작한다.
+
+```julia
+using Preferences, Kiwi_jll
+set_preferences!(Kiwi_jll, "libkiwi_path" => "/path/to/libkiwi.so")
+```
 
 ## 사용법
 
@@ -102,4 +108,4 @@ tf_idf(m)
 
 ## 라이선스
 
-MIT ([LICENSE](LICENSE) 참고). 설치 시 내려받는 Kiwi 바이너리와 모델(Kiwi v0.24.1)은 Apache-2.0이다.
+MIT ([LICENSE](LICENSE) 참고). Kiwi(v0.25.0)는 Kiwi_jll의 라이브러리와 설치 시 내려받는 모델 모두 Apache-2.0이다.

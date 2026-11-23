@@ -9,6 +9,7 @@ Kiwi(https://github.com/bab2min/Kiwi) C API를 `ccall`로 호출하는 한국어
 module KiwiKorean
 
 using Artifacts
+using Kiwi_jll: Kiwi_jll
 
 export Kiwi, Token, tokenize, morphs, pos, nouns, lemma, split_sentences, space, extract_words
 
