@@ -38,10 +38,10 @@ mutable struct Kiwi
             end
             user_dict === nothing ||
                 check(ccall((:kiwi_builder_load_dict, libkiwi), Cint, (Ptr{Cvoid}, Cstring), b, user_dict))
-            # In v0.24, passing a typo set at build time crashes during analysis,
-            # so a prepared typo corrector is passed via the analyze options instead.
-            # v0.24에서는 빌드 시 오타 집합을 넘기면 분석 중 크래시가 난다.
-            # 대신 준비된(prepared) 오타 교정기를 분석 옵션으로 넘긴다.
+            # Typo correctors are passed via the analyze options, not at build time: passing one at
+            # build time crashed in v0.24 and is deprecated since v0.25.
+            # 오타 교정기는 빌드 시가 아니라 분석 옵션으로 넘긴다. 빌드 시 전달은 v0.24에서 크래시가 났고
+            # v0.25부터 지원 종료 예정이다.
             ptr = check(ccall((:kiwi_builder_build, libkiwi), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Cfloat),
                               b, C_NULL, 0f0))
             typo = if typos === :none
